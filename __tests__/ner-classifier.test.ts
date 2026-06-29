@@ -167,6 +167,47 @@ describe("detectNer span repair", () => {
     }
   });
 
+  it("anchors BIO offsets to token index so duplicate digit runs map correctly", async () => {
+    const text = "or 555-123-4567. I live at 1234 Maple Street.";
+    const tokenize = (input: string) => {
+      const infer = input.replaceAll("-", " ");
+      const pieces: string[] = [];
+      for (const word of infer.split(/\s+/)) {
+        if (word.length === 0) continue;
+        if (word === "1234") {
+          pieces.push("123", "##4");
+          continue;
+        }
+        pieces.push(word);
+      }
+      return pieces;
+    };
+    const classifier: TokenClassifier = async (input) => {
+      const tokens = tokenize(input);
+      const indexOf = (piece: string, from: number) => tokens.findIndex((t, i) => i >= from && t === piece);
+      const at = indexOf("at", 0);
+      const building123 = indexOf("123", at + 1);
+      const building4 = indexOf("##4", building123 + 1);
+      const maple = indexOf("maple", building4 + 1);
+      const street = indexOf("street", maple + 1);
+      return [
+        { entity: "B-BUILDING_NUMBER", score: 0.99, index: building123 + 1, word: "123", start: 0, end: 0 },
+        { entity: "B-BUILDING_NUMBER", score: 0.99, index: building4 + 1, word: "##4", start: 0, end: 0 },
+        { entity: "B-STREET_NAME", score: 0.99, index: maple + 1, word: "maple", start: 0, end: 0 },
+        { entity: "I-STREET_NAME", score: 0.99, index: street + 1, word: "street", start: 0, end: 0 },
+      ];
+    };
+    classifier.tokenize = tokenize;
+
+    const spans = await detectNer(text, classifier);
+    const building = spans.find((s) => s.label === "BUILDING_NUMBER");
+    const street = spans.find((s) => s.label === "STREET_NAME");
+
+    expect(building?.text).toBe("1234");
+    expect(street?.text).toBe("Maple Street");
+    expect(text.slice(building!.start, building!.end)).toBe("1234");
+  });
+
   it("does not keep isolated below-anchor spans", async () => {
     const classifier: TokenClassifier = async () => [
       { entity_group: "GIVEN_NAME", score: 0.22, start: 11, end: 16, word: "Maybe" },
