@@ -346,12 +346,16 @@ Same surrounding context across all traditions — only the name varies.
 | South Asian (Hindi) | hi_IN        | 5.6%   | 125   |
 | Arabic              | ar_AA        | 4.8%   | 125   |
 | Slavic (Russian)    | ru_RU        | 2.4%   | 125   |
+| South Asian (Tamil) | ta           | 48.0%  | 125   |
+| South Asian (Tamil Romanized) | ta_Latn | 99.4% | 125   |
 
 Aggregated by script:
 
 - **Latin-ASCII names**: ~100% recall (695 / 695)
 - **Latin + diacritics**: 99.8% recall (429 / 430)
 - **Non-Latin scripts**: 13.7% recall (103 / 750)
+
+*(Note: The combined fairness-suite aggregate (n=1,875, 65.44%) is left unchanged, as the underlying case-level data for the other 15 traditions is not available in this repository to support a recomputed blended total. A maintainer with access to the original per-case results should recompute the full aggregate if Tamil is merged into the suite.)*
 
 The deterministic recognizer layer does not catch names — there is no checksum to validate against — so this failure surfaces at the system level.
 This is the most important regression we have identified, and the fairness suite is wired into the eval pipeline as a stratified regression test so any further drop will surface in subsequent training cycles.

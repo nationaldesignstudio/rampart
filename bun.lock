@@ -5,15 +5,15 @@
     "": {
       "name": "@nationaldesignstudio/rampart",
       "devDependencies": {
+        "@faker-js/faker": "^10.5.0",
         "@huggingface/transformers": "3.7.5",
         "@types/bun": "1.3.14",
-        "playwright": "^1.61.1",
+        "playwright": "1.61.1",
         "typescript": "5.9.2",
         "vitest": "4.1.8",
       },
       "peerDependencies": {
         "@huggingface/transformers": ">=3",
-        "typescript": "5",
       },
       "optionalPeers": [
         "@huggingface/transformers",
@@ -26,6 +26,8 @@
     "@emnapi/runtime": ["@emnapi/runtime@1.11.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-vgj7R3y3Wgx24IQaGPA/R6YFXLHVMOZ0uVEyIQPaWs+rd1AzfEMXlAC22FYwO1XkKR6NPsq7mUandH8oIRdZFw=="],
 
     "@emnapi/wasi-threads": ["@emnapi/wasi-threads@1.2.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w=="],
+
+    "@faker-js/faker": ["@faker-js/faker@10.5.0", "", {}, "sha512-bsxD8WLS5lIj7aaoCx1YJkktqYj5vlBUE6HWzu2Q51ksrGJ0H737ECCKlFU7Yf8Br45z9t99frBp/J7kzbMPAg=="],
 
     "@huggingface/jinja": ["@huggingface/jinja@0.5.9", "", {}, "sha512-uWTG+l3VJRsl7EXxYizuL3P+cCPoc3cRqbWWRcQN0FhejRfbdq0RNhCmbY/YDtnTcz9icdLYuLDjsnz4d8JMuw=="],
 
