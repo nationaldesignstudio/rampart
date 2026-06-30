@@ -37,3 +37,20 @@ jobs:
 
       - name: Verify npm package contents
         run: npm pack --dry-run --cache /tmp/npm-cache-rampart
+
+  swift:
+    name: Verify RampartCoreML
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Fetch tokenizer vocabulary
+        run: |
+          git lfs install --local
+          git lfs pull --include="model/vocab.txt" --exclude=""
+
+      - name: Run Swift package tests
+        run: swift test

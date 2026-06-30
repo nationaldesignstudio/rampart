@@ -214,6 +214,28 @@ Set `HF_TOKEN` when pulling from a private Hugging Face repo.
 bun run redact   # interactive terminal redactor (Node, device: cpu)
 ```
 
+### Apple platforms
+
+For native iOS and macOS apps, this repository also exposes a Swift package
+product, `RampartCoreML`, backed by a Core ML conversion of the released model.
+The Apple sources, conversion scripts, and iOS example live in
+[`apple/RampartCoreML`](./apple/RampartCoreML).
+
+[Watch the iOS example demo.](./apple/RampartCoreML/docs/assets/rampart-ios-demo.mp4)
+
+```swift
+import RampartCoreML
+
+let rampart = try await RampartGuard.downloaded()
+let protected = try rampart.protect("My name is Alex Rivera.")
+let reply = rampart.reveal("Hello [GIVEN_NAME_1].")
+```
+
+The Swift package downloads the published Core ML artifact on first use, runs
+inference locally, and keeps a local placeholder table for `protect`/`reveal`.
+To reproduce the Core ML package from the released ONNX model, see
+[`apple/RampartCoreML/README.md`](./apple/RampartCoreML/README.md).
+
 ## Limitations
 
 The most consequential documented gaps:
@@ -271,6 +293,7 @@ bun run bench                              # score the shipped pipeline
 | --- | --- |
 | **npm** | `@nationaldesignstudio/rampart` — TypeScript runtime API |
 | **GitHub** | [`nationaldesignstudio/rampart`](https://github.com/nationaldesignstudio/rampart) — source, tests, eval harness, model weights |
+| **Swift / Core ML** | `RampartCoreML` — Apple-platform Core ML conversion, Swift package, CLI, and iOS example in [`apple/RampartCoreML`](./apple/RampartCoreML) |
 
 ## License
 

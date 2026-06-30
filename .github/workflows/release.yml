@@ -140,3 +140,83 @@ jobs:
             --commit-message "Release ${{ github.event.release.tag_name || github.sha }}"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+  coreml:
+    name: Publish Core ML artifact
+    needs: verify
+    if: github.repository == 'nationaldesignstudio/rampart'
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Fetch model artifacts
+        run: |
+          git lfs install --local
+          git lfs pull --include="model/onnx/model_q4.onnx,model/tokenizer.json,model/tokenizer_config.json,model/special_tokens_map.json,model/vocab.txt,model/config.json" --exclude=""
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install conversion dependencies
+        run: python -m pip install -r apple/RampartCoreML/requirements-convert.txt
+
+      - name: Copy release model files
+        run: |
+          mkdir -p apple/RampartCoreML/artifacts/rampart-hf
+          cp model/onnx/model_q4.onnx apple/RampartCoreML/artifacts/rampart-hf/model_q4.onnx
+          cp model/config.json apple/RampartCoreML/artifacts/rampart-hf/config.json
+          cp model/tokenizer.json apple/RampartCoreML/artifacts/rampart-hf/tokenizer.json
+          cp model/tokenizer_config.json apple/RampartCoreML/artifacts/rampart-hf/tokenizer_config.json
+          cp model/special_tokens_map.json apple/RampartCoreML/artifacts/rampart-hf/special_tokens_map.json
+          cp model/vocab.txt apple/RampartCoreML/artifacts/rampart-hf/vocab.txt
+
+      - name: Convert ONNX to Core ML
+        working-directory: apple/RampartCoreML
+        run: python scripts/convert_rampart_to_coreml.py
+
+      - name: Validate Core ML parity
+        working-directory: apple/RampartCoreML
+        run: python scripts/validate_coreml_parity.py
+
+      - name: Run Swift package tests with model artifacts
+        run: swift test
+
+      - name: Build iOS example
+        run: |
+          xcodebuild \
+            -project apple/RampartCoreML/Examples/RampartExampleiOS/RampartExampleiOS.xcodeproj \
+            -scheme RampartExampleiOS \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            build
+
+      - name: Package Core ML runtime artifacts
+        run: |
+          cd apple/RampartCoreML
+          mkdir -p artifacts/legal
+          cp LICENSE artifacts/legal/LICENSE
+          cp NOTICE.md artifacts/legal/NOTICE.md
+          zip -qry ../../rampart-coreml-artifacts.zip \
+            artifacts/RampartTokenClassifier.mlpackage \
+            artifacts/rampart-hf/vocab.txt \
+            artifacts/rampart-hf/config.json \
+            artifacts/legal/LICENSE \
+            artifacts/legal/NOTICE.md
+          cd ../..
+          shasum -a 256 rampart-coreml-artifacts.zip > rampart-coreml-artifacts.zip.sha256
+
+      - name: Upload Core ML release artifact
+        if: ${{ github.event_name == 'release' && inputs.dry_run != 'true' }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            rampart-coreml-artifacts.zip \
+            rampart-coreml-artifacts.zip.sha256 \
+            --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

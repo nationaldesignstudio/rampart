@@ -62,6 +62,35 @@ The export contains:
 - `.gitattributes` for ONNX Git LFS tracking.
 - `LICENSE`, `MODEL_CARD.md`, `WHITEPAPER.md`, and `examples/basic-chat.ts`.
 
+## Core ML
+
+The release workflow also builds the Apple runtime artifact from the released
+ONNX model and attaches two files to the GitHub Release:
+
+- `rampart-coreml-artifacts.zip`
+- `rampart-coreml-artifacts.zip.sha256`
+
+The ZIP contains the generated Core ML package plus the tokenizer vocabulary and
+config files required by the Swift runtime:
+
+```text
+artifacts/RampartTokenClassifier.mlpackage
+artifacts/rampart-hf/vocab.txt
+artifacts/rampart-hf/config.json
+```
+
+Swift package users download this release asset automatically through
+`RampartCoreMLClassifier.downloaded()`. The same artifact can be generated
+locally from the upstream ONNX model:
+
+```bash
+cd apple/RampartCoreML
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-convert.txt
+python scripts/convert_rampart_to_coreml.py
+```
+
 ## Automated release (CI)
 
 Publishing both channels is wired into GitHub Actions
@@ -71,9 +100,10 @@ Publishing both channels is wired into GitHub Actions
 2. Publish a GitHub Release whose tag matches that version.
 
 The workflow re-runs `verify:public` + an `npm pack` dry run as a shared gate,
-then publishes to npm (`npm publish --access restricted`) and Hugging Face
-(`export:huggingface:verify` → `hf upload`) as independent jobs. `npm` rejects
-republishing an existing version, so the tag/release version is what ships.
+then publishes to npm (`npm publish --access restricted`), Hugging Face
+(`export:huggingface:verify` → `hf upload`), and the Core ML GitHub Release
+artifact as independent jobs. `npm` rejects republishing an existing version, so
+the tag/release version is what ships.
 
 Run it manually with `workflow_dispatch` to rehearse — it defaults to a dry run
 (builds and verifies, publishes nothing).

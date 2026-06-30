@@ -1,0 +1,6 @@
+coremltools>=8.3
+numpy
+onnx>=1.16
+onnxruntime>=1.22
+tokenizers
+torch

@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Xcode user/local state
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Local model artifacts
+artifacts/
+**/*.mlpackage/
+**/*.mlmodelc/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/

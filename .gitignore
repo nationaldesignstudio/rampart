@@ -16,3 +16,16 @@ eval/bench/runs/*/latency.json
 
 **/__pycache__/
 .wrangler
+
+# Swift Package Manager / Xcode
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Local Core ML conversion artifacts
+artifacts/
+apple/RampartCoreML/artifacts/
+**/*.mlpackage/
+**/*.mlmodelc/
