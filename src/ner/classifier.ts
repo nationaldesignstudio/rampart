@@ -17,12 +17,13 @@ import { mergeSpans } from "../policy";
 import type { PiiLabel, Span } from "../types";
 
 /** Minimal shape of a transformers.js token-classification result row. */
-interface RawEntity {
+export interface RawEntity {
   readonly entity_group?: string;
   readonly entity?: string;
   readonly score: number;
-  readonly start: number;
-  readonly end: number;
+  /** Char offsets; present on aggregated rows, absent on raw BIO token rows. */
+  readonly start?: number;
+  readonly end?: number;
   readonly word: string;
   /** Index into `[CLS] + content + [SEP]`; used for tokenizer-backed offset recovery. */
   readonly index?: number;
@@ -82,8 +83,13 @@ export interface NerOptions {
    * {@link RAMPART_MODEL_ID}.
    */
   readonly model?: string;
-  /** Backend. `"wasm"`/`"webgpu"` in browsers; `"cpu"` for Node (ORT). */
-  readonly device?: "wasm" | "webgpu" | "cpu";
+  /**
+   * Backend. `"wasm"`/`"webgpu"` run transformers.js (ONNX Runtime) in browsers;
+   * `"cpu"` is ORT for Node. `"webgpu2"` runs the shipped q4 model on Rampart's
+   * own WGSL kernels (`src/ner/webgpu2`) with no transformers.js dependency; for
+   * it, `model` may also be a base URL or path serving the model directory.
+   */
+  readonly device?: "wasm" | "webgpu" | "webgpu2" | "cpu";
   /** Spans below this score are discarded. Low default → recall-biased. */
   readonly minScore?: number;
 }
@@ -134,9 +140,13 @@ const RIGHT_PARTICLE_RE = /^([\s'\u2019.-]{1,3})([\p{Lu}][\p{L}\p{M}\u2019']{0,3
  * load — keeping the heuristic path dependency-free.
  */
 export async function loadNerClassifier(options: NerOptions = {}): Promise<TokenClassifier> {
-  const { pipeline } = await import("@huggingface/transformers");
   const merged = { ...DEFAULT_OPTIONS, ...options };
   const model = merged.model ?? RAMPART_MODEL_ID;
+  if (merged.device === "webgpu2") {
+    const { loadWebgpu2Classifier } = await import("./webgpu2/index");
+    return loadWebgpu2Classifier({ model });
+  }
+  const { pipeline } = await import("@huggingface/transformers");
   const classifier = await pipeline("token-classification", model, {
     dtype: "q4",
     device: merged.device,
